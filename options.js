@@ -1,58 +1,63 @@
-const input = document.getElementById('seekStep');
-const saveBtn = document.getElementById('save');
-const minusBtn = document.getElementById('minus');
-const plusBtn = document.getElementById('plus');
-const presets = document.querySelectorAll('.preset');
-
 const STEP = 0.5;
-const MIN = 0.5;
-const MAX = 600;
+const MIN  = 0.5;
+const MAX  = 600;
 
 function clamp(v) {
     if (isNaN(v)) return MIN;
     return Math.max(MIN, Math.min(MAX, v));
 }
 
-function syncPresets() {
-    const v = parseFloat(input.value);
-    presets.forEach(p => {
-        p.classList.toggle('active', parseFloat(p.dataset.val) === v);
-    });
+/**
+ * 为一个平台区块绑定交互逻辑
+ * @returns {{ getValue, setValue }}
+ */
+function makeSection(inputId, minusId, plusId, presetSelector) {
+    const input    = document.getElementById(inputId);
+    const minusBtn = document.getElementById(minusId);
+    const plusBtn  = document.getElementById(plusId);
+    const presets  = document.querySelectorAll(presetSelector);
+
+    function syncPresets() {
+        const v = parseFloat(input.value);
+        presets.forEach(p => p.classList.toggle('active', parseFloat(p.dataset.val) === v));
+    }
+
+    function setValue(v) {
+        input.value = clamp(v);
+        syncPresets();
+    }
+
+    minusBtn.addEventListener('click', () => setValue(parseFloat(input.value || 0) - STEP));
+    plusBtn.addEventListener('click',  () => setValue(parseFloat(input.value || 0) + STEP));
+
+    presets.forEach(p => p.addEventListener('click', () => setValue(parseFloat(p.dataset.val))));
+
+    input.addEventListener('input', syncPresets);
+    input.addEventListener('blur',  () => setValue(parseFloat(input.value)));
+    input.addEventListener('keydown', (e) => { if (e.key === 'Enter') saveBtn.click(); });
+
+    return {
+        getValue: () => clamp(parseFloat(input.value)),
+        setValue,
+    };
 }
 
-function setValue(v) {
-    input.value = clamp(v);
-    syncPresets();
-}
+const yt   = makeSection('ytSeekStep',   'ytMinus',   'ytPlus',   '.yt-preset');
+const bili = makeSection('biliSeekStep', 'biliMinus', 'biliPlus', '.bili-preset');
 
 // 初始化读取设置
-chrome.storage.sync.get({ customSeekStep: 2 }, (items) => {
-    setValue(items.customSeekStep);
+chrome.storage.sync.get({ ytSeekStep: 2, biliSeekStep: 2 }, (items) => {
+    yt.setValue(items.ytSeekStep);
+    bili.setValue(items.biliSeekStep);
 });
 
-// 加减按钮
-minusBtn.addEventListener('click', () => {
-    setValue(parseFloat(input.value || 0) - STEP);
-});
-plusBtn.addEventListener('click', () => {
-    setValue(parseFloat(input.value || 0) + STEP);
-});
-
-// 预设按钮
-presets.forEach(p => {
-    p.addEventListener('click', () => {
-        setValue(parseFloat(p.dataset.val));
-    });
-});
-
-// 输入框变化
-input.addEventListener('input', syncPresets);
-input.addEventListener('blur', () => setValue(parseFloat(input.value)));
-
-// 保存
+// 保存按钮
+const saveBtn = document.getElementById('save');
 saveBtn.addEventListener('click', () => {
-    const step = clamp(parseFloat(input.value));
-    chrome.storage.sync.set({ customSeekStep: step }, () => {
+    chrome.storage.sync.set({
+        ytSeekStep:   yt.getValue(),
+        biliSeekStep: bili.getValue(),
+    }, () => {
         const original = saveBtn.textContent;
         saveBtn.textContent = '✓ 已保存';
         saveBtn.classList.add('saved');
@@ -61,9 +66,4 @@ saveBtn.addEventListener('click', () => {
             saveBtn.classList.remove('saved');
         }, 1200);
     });
-});
-
-// 回车保存
-input.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') saveBtn.click();
 });

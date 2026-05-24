@@ -2,6 +2,7 @@
   "manifest_version": 3,
   "name": "YouTube Custom Seek",
   "version": "1.1",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAwjAi4NapniMvecHymmed7lAws5n2hae52bkqhoUHSMkTbbrfRMkyM9dwFCi4t8nHbK/Zxp+xDxIMCP9343ScyZEbgsEXtveA3qarR6QD0W7vP8kd17lJoz2DpzqULD8Xx3q7txSqso72utGQziscA1G0QCCGDHNSlppWwxZ44K0T2vnRFBnL6Af9/tCrJ1eME6YRopsKvCiK2YbhDKHHLNROTUX7uxxfcJSg4f/HkofDAF9vOFdoxIWNb+4SYgg+0qVB10PXjiycSs1jweUfcR+mbWyY9/rV+anxccoqaCogIC67EEo1S0jTTyY9DosV+zkWvV9mdMiA3BZAolcPYQIDAQAB",
   "description": "自定义 YouTube 左右方向键的跳转秒数",
   "permissions": [
     "storage"
@@ -25,7 +26,8 @@
   "content_scripts": [
     {
       "matches": [
-        "*://www.youtube.com/*"
+        "*://*.youtube.com/*",
+        "*://*.bilibili.com/*"
       ],
       "js": [
         "content.js"
